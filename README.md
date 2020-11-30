@@ -1,7 +1,7 @@
 # TLeague Project Page
 This is the project page for the following technical reports:
 
-Lei Han∗, Jiechao Xiong∗, Peng Sun∗, Xinghai Sun, Meng Fang, Qingwei Guo, Qiaobo Chen, Tengfei Shi, Zhengyou Zhang.
+Lei Han∗, Jiechao Xiong∗, Peng Sun∗, Xinghai Sun, Meng Fang, Qingwei Guo, Qiaobo Chen, Tengfei Shi, Hongsheng Yu, Zhengyou Zhang.
 TStarBot-X: An Open-Sourced and Comprehensive Study for Efficient League Training in StarCraft II Full Game.
 [arXiv preprint arXiv:2011.13729](https://arxiv.org/abs/2011.13729), 2020.
 (* Equal contribution, correspondence to the first three authors)
