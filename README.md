@@ -26,9 +26,10 @@ one needs to install the following basic packages:
 * [TLeague](https://github.com/tencent-ailab/TLeague): the main logic of Competitive SelfPlay MultiAgent Reinforcement Learning.
 * [TPolicies](https://github.com/tencent-ailab/TPolicies): a lib for building Neural Net used in RL and IL.
 * [Arena](https://github.com/tencent-ailab/Arena): a lib of environments and env-agent interfaces.
-See the docs therein for how to install.
 
-Then, try the example of training with the simple game `pong-2p` as a sanity check. 
+See the docs therein for how to install `TLeague`, `TPolicies`, `Arena`, respectively.
+
+Then, try the example of training with the simple game `pong-2p` (an environment contained in `Arena`) as a sanity check. 
 See the [link here](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#pong-2p).
 
 To run training for other environments, extra binaries and/or packages must be installed, as explained in the following.
