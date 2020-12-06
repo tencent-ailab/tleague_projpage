@@ -55,7 +55,8 @@ see the [link here](https://github.com/tencent-ailab/Arena#dependencies).
 [Here are examples](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#vizdoom)
 of how to train ViZDoom in a single machine.
 
-TODO: pointer to the Docker Auto Build repo and say it's yet-another guide to installation from scratch.
+Refer also to the [link here](https://github.com/tencent-ailab/TLeagueVdAutoBuild.git) for how to (auto-)build the docker image,
+which is yet-another guide to installation from scratch.
 
 TODO: texts for how to train with k8s
 
