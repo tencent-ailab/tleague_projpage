@@ -20,6 +20,8 @@ TLeague: A Framework for Competitive Self-Play based Distributed Multi-Agent Rei
 * For the resources of Pommerman experiments, see [the page here](pommerman/README.md)
 
 ## Usage
+`Python>=3.6` is required. We've tested `Python 3.6.5`.
+
 ### Minimal Working Example
 To use the TLeague framework and run a minimal training,
 one needs to install the following basic packages:
@@ -28,6 +30,19 @@ one needs to install the following basic packages:
 * [Arena](https://github.com/tencent-ailab/Arena): a lib of environments and env-agent interfaces.
 
 See the docs therein for how to install `TLeague`, `TPolicies`, `Arena`, respectively.
+Briefly, 
+it amounts to git-cloning/downloading the repos and do the in-place pip installation. 
+For examples,
+```bash
+git clone https://github.com/tencent-ailab/TLeague.git ~/TLeague
+git clone https://github.com/tencent-ailab/TPolicies.git ~/TPolicies
+git clone https://github.com/tencent-ailab/Arena.git ~/Arena
+cd ~/TLeague && pip install -e . && cd ~
+cd ~/TPolicies && pip install -e . && cd ~
+cd ~/Arena && pip install -e . && cd ~
+# manually install tensorflow 1.15.0 as required by TPolicies
+pip install tensorflow==1.15.0
+``` 
 
 Then, try the example of training with the simple game `pong-2p` (an environment contained in `Arena`) as a sanity check. 
 See the [link here](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#pong-2p).
