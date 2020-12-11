@@ -73,7 +73,7 @@ of how to train ViZDoom in a single machine.
 Refer also to the [link here](https://github.com/tencent-ailab/TLeagueVdAutoBuild.git) for how to (auto-)build the docker image,
 which is yet-another guide to installation from scratch.
 
-TODO: texts for how to train with k8s
+For running training over a k8s cluster, see the [link here](vizdoom/README.md#training-code).
 
 ### Pommerman Training
 When installing the `Arena` package, 
@@ -86,6 +86,17 @@ for how to train Pommerman in a single machine.
 TODO: pointer to the Docker Auto Build repo and say it's yet-another guide to installation from scratch.
 
 TODO: texts for how to train with k8s
+
+### Single Agent RL
+TLeague also works for pure RL,
+which can be viewed as a special case of MARL where the number of agents equals to one.
+[Here are examples](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#single-agent-rl)
+for how to train gym Atari in a single machine.
+
+Ensure the correct dependencies are installed:
+```bash
+pip install gym[atari]==0.12.1
+```
 
 # Disclaimer
 This is not an officially supported Tencent product.

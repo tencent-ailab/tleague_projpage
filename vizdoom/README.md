@@ -116,5 +116,26 @@ bash MyPlayer/TLeague/tleague/sandbox/example_evaluation_vd.sh evaluation
 ./run.sh f1
 ```
 
+## Training Code
+As described in the technical reports, there are two stages for training:
+one for the navigation, and the other for the frag.
+We provide the corresponding `.yml.jinja2` files here: [for navigation](vdtr-navi-open.yml.jinja2) and [for frag](vdtr-frag-open.yml.jinja2), respectively.
+
+Run the training over a k8s cluster:
+```bash
+# start
+python render_template.py vdtr-navi-open.yml.jinja2 | kubectl apply -f -
+# stop
+python render_template.py vdtr-navi-open.yml.jinja2 | kubectl delete -f -
+```
+```bash
+# start
+python render_template.py vdtr-frag-open.yml.jinja2 | kubectl apply -f -
+# stop
+python render_template.py vdtr-frag-open.yml.jinja2 | kubectl delete -f -
+```
+
+TODO: guidance to setting up PVC?
+
 ## Downloads
 TODO: link to the video clips for the evaluation
