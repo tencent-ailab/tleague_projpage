@@ -1,0 +1,604 @@
+{% set session = 'tr2504-pommerman' %}
+{% set time_tag = "20210104145000" %}
+{% set image = "ccr.ccs.tencentyun.com/sc2ai/tleague-pommerman:" + time_tag %}
+{% set learner_image = "ccr.ccs.tencentyun.com/sc2ai/tleague-gpu-hvd-pommerman:" + time_tag %}
+{% set docker_registry_credential = "tke-dockreg-cred" %}
+{% set require_resources = true %}
+{% set pvc_name = "pvc-share-full" %}
+{% set chkpoints_zoo_pvc_sub_dir = "chkpoints_zoo/" %}
+{% set chkpoints_pvc_sub_dir = chkpoints_zoo_pvc_sub_dir + session + "_chkpoints" %}
+{# common #}
+{% set env = "pommerman_v2_fog" %}
+{% set policy = "tpolicies.net_zoo.pommerman.conv_lstm" %}
+{% set policy_config = {
+  'use_xla': True,
+  'test': False,
+  'rl': True,
+  'use_loss_type': 'rl_ppo',
+  'use_value_head': True,
+  'use_self_fed_heads': False,
+  'use_lstm': True,
+  'nlstm': 64,
+  'hs_len': 128,
+  'lstm_duration': 1,
+  'lstm_dropout_rate': 0.0,
+  'lstm_cell_type': 'lstm',
+  'lstm_layer_norm': True,
+  'weight_decay': 0.00000002,
+  'n_v': 11,
+  'merge_pi': False,
+  'forget_bias': 1.0,
+} %}
+{% set self_policy_config = {
+  'batch_size': 8,
+  'rollout_len': 1,
+  'use_xla': False,
+  'test': True,
+  'use_loss_type': 'none',
+  'use_value_head': True,
+  'use_self_fed_heads': True,
+  'use_lstm': True,
+  'nlstm': 64,
+  'hs_len': 128,
+  'lstm_duration': 1,
+  'lstm_dropout_rate': 0.0,
+  'lstm_cell_type': 'lstm',
+  'lstm_layer_norm': True,
+  'weight_decay': 0.00000002,
+  'n_v': 11,
+  'merge_pi': False,
+  'forget_bias': 1.0,
+} %}
+{% set use_infserver = false %}
+{% set self_infserver_config = {
+  'outputs': ['a', 'neglogp'],
+  'update_model_seconds': 30,
+  'model_key': '',
+} %}
+{% set parallel_infserver_num = 1 %}
+{% set infserver_batch_worker_num = 4 %}
+{% set unroll_length = 64 %}
+{% set rollout_length = 16 %}
+{# model pool#}
+{% set n_model_pools = 1 %}
+{% set model_pool_port1 = 10003 %}
+{% set model_pool_port2 = 10004 %}
+{% set model_pool_verbose = 0 %}
+{# league mgr #}
+{% set league_mgr_port = 20005 %}
+{% set game_mgr_type = "tleague.game_mgr.ae_game_mgrs.AEMatchMakingGameMgr" %}
+{% set game_mgr_config = {
+  'lrn_id_list': ['lrngrp0'],
+  'lrn_role_list': ['MA'],
+  'main_agent_pfsp_prob': 0.5,
+  'main_agent_forgotten_prob': 0.15,
+  'main_agent_forgotten_me_winrate_thre': 0.5,
+  'main_agent_forgotten_ma_winrate_thre': 0.7,
+} %}
+{% set mutable_hyperparam_type = "MutableHyperparam" %}
+{% set hyperparam_config_name = {
+  'learning_rate': 0.00001,
+  'lam': 0.8,
+  'gamma': 1.0,
+  'burn_in_timesteps': 1000000,
+  'reward_weights': [1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+} %}
+{% set league_mgr_restore_checkpoint_dir = "" %}
+{% set league_mgr_chkpoints_dir = "/root/results/" %}
+{% set league_mgr_save_checkpoint_root = league_mgr_chkpoints_dir + session + "_chkpoints" %}
+{% set league_mgr_save_interval_secs = 900 %}
+{% set mute_actor_msg = true %}
+{% set pseudo_learner_num = -1 %}
+{% set init_model_paths = "[]"
+%}
+{% set league_mgr_verbose = 0 %}
+{# learners #}
+{% set n_lrn_groups = 1 %}
+{% set n_hosts_per_lrn_group = [1] %}
+{% set n_gpus_per_host = 2 %}
+{% set hvd_ssh_port = 9527 %}
+{% set lrn_port_base = 30003 %}
+{% set batch_size = 4096 %}
+{% set lrn_rm_size = 32000 %}
+{% set lrn_pub_interval = 200 %}
+{% set lrn_log_interval = 100 %}
+{% set lrn_burn_in_timesteps = 0 %}
+{% set n_v = 11 %}
+{% set lrn_rwd_shape = true %}
+{% set lrn_tb_port = 9003 %}
+{% set lrngrp_learner_config = [
+  {'vf_coef': [10, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+   'max_grad_norm': 1.0,
+   'distill_coef': 0.0,
+   'ent_coef': [0.01, 0.01],
+   'adam_beta1': 0.0,
+   'adam_beta2': 0.99,
+   'adam_eps': 0.00001,
+   'ep_loss_coef': {}
+  },
+]%}
+{% set lrngrp_total_timesteps = [
+    200000000,
+] %}
+{# actors per learner #}
+{% set n_actors_per_learner = 25 %}
+{% set actor_update_model_freq = 3200 %}
+{% set actor_rwd_shape = false %}
+{% set actor_log_interval_steps = 51 %}
+{% set actor_verbose = 11 %}
+{% set actor_replay_dir = "/root/replays/" %}
+{% set lrngrp_interface_config = [{}]%}
+{% set lrngrp_env_config = [
+  {'rotate': False, 
+   'centralV': False,
+   'random_side': True,
+  },
+] %} 
+
+{# --- league manager --- #}
+{% if true %}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ session }}-league-mgr
+  labels:
+    session: {{ session }}
+    job: league-mgr
+    type: league-mgr
+spec:
+  selector:
+    session: {{ session }}
+    job: league-mgr
+  ports:
+  - port: {{ league_mgr_port }}
+    name: port1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ session }}-league-mgr
+  labels:
+    session: {{ session }}
+    type: league-mgr
+    job: league-mgr
+spec:
+  nodeSelector:
+    type: cpu
+  restartPolicy: Never  # if failure, let it die
+  volumes:
+    - name: data-dir
+      persistentVolumeClaim:
+        claimName: {{ pvc_name }}
+{% if docker_registry_credential %}
+  imagePullSecrets:
+  - name: {{ docker_registry_credential }}
+{% endif %}
+  containers:
+    - name: {{ session }}-league-mgr-container
+      image: {{ image }}
+      ports:
+      - containerPort: {{ league_mgr_port }}
+{% if require_resources %}
+      resources:
+        limits:
+          nvidia.com/gpu: 0
+        requests:
+          nvidia.com/gpu: 0
+          cpu: 3
+          memory: 6Gi
+{% endif %}
+      volumeMounts:
+        - mountPath: {{ league_mgr_chkpoints_dir }}
+          name: data-dir
+          subPath: {{ chkpoints_zoo_pvc_sub_dir }}
+      command:
+      - "python"
+      args:
+      - "-m"
+      - "tleague.bin.run_league_mgr"
+{% set sep = joiner(',') %}
+      - "--model_pool_addrs={% for i in range(n_model_pools) %}{{ sep() }}{{ session }}-mp{{ i }}:{{ model_pool_port1 }}:{{ model_pool_port2 }}{% endfor %}"
+      - "--port={{ league_mgr_port }}"
+      - "--game_mgr_type={{ game_mgr_type }}"
+      - "--game_mgr_config={{ game_mgr_config }}"
+      - "--mutable_hyperparam_type={{ mutable_hyperparam_type }}"
+      - "--hyperparam_config_name={{ hyperparam_config_name }}"
+      - "--restore_checkpoint_dir={{ league_mgr_restore_checkpoint_dir }}"
+      - "--save_checkpoint_root={{ league_mgr_save_checkpoint_root }}"
+      - "--save_interval_secs={{ league_mgr_save_interval_secs }}"
+      - "--{% if mute_actor_msg %}mute_actor_msg{% else %}nomute_actor_msg{% endif %}"
+      - "--verbose={{ league_mgr_verbose }}"
+      - "--pseudo_learner_num={{ pseudo_learner_num }}"
+      - "--init_model_paths={{ init_model_paths }}"
+{% endif %}
+{# --- model pools --- #}
+{% if true %}
+{% for i in range(n_model_pools) %}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ session }}-mp{{ i }}
+  labels:
+    session: {{ session }}
+    job: model-pool-{{ i }}
+    type: model-pool
+spec:
+  selector:
+    session: {{ session }}
+    job: model-pool-{{ i }}
+  ports:
+  - port: {{ model_pool_port1 }}
+    name: port1
+  - port: {{ model_pool_port2 }}
+    name: port2
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ session }}-mp{{ i }}
+  labels:
+    session: {{ session }}
+    job: model-pool-{{ i }}
+    type: model-pool
+spec:
+  nodeSelector:
+    type: cpu 
+{% if docker_registry_credential %}
+  imagePullSecrets:
+  - name: {{ docker_registry_credential }}
+{% endif %}
+  restartPolicy: Never  # if failure, let it die
+  containers:
+    - name: {{ session }}-model-pool-container
+      image: {{ image }}
+      ports:
+      - containerPort: {{ model_pool_port1 }}
+      - containerPort: {{ model_pool_port2 }}
+{% if require_resources %}
+      resources:
+        limits:
+          nvidia.com/gpu: 0
+        requests:
+          nvidia.com/gpu: 0
+          cpu: 7
+          memory: 14Gi
+{% endif %}
+      command:
+      - "python"
+      args:
+      - "-m"
+      - "tleague.bin.run_model_pool"
+      - "--ports={{ model_pool_port1 }}:{{ model_pool_port2 }}"
+      - "--verbose={{ model_pool_verbose }}"
+{% endfor %}
+{% endif %}
+{# --- learners and actors per learner --- #}
+{% if true %}
+{% for i in range(n_lrn_groups) %}
+{% for j in range(n_hosts_per_lrn_group[i] - 1, -1, -1) %}
+{# --- each host corresponds to a service owning a DNS name #}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ session }}-lg{{ i }}-h{{ j }}
+  labels:
+    session: {{ session }}
+    type: learner
+spec:
+  selector:
+    session: {{ session }}
+    type: learner
+    group: group-{{ i }}
+    host: host-{{ j }}
+  ports:
+  - port: {{ hvd_ssh_port }}
+    name: port-ssh
+{% for k in range(n_gpus_per_host) %}
+  - port: {{ lrn_port_base + 2*k}}
+    name: port{{ 2*k }}
+  - port: {{ lrn_port_base + 2*k + 1 }}
+    name: port{{ 2*k + 1 }}
+{% endfor %}
+{% if lrn_tb_port %}
+  - port: {{ lrn_tb_port }}
+    name: port-tb
+{% endif %}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ session }}-lg{{ i }}-h{{ j }}
+  labels:
+    session: {{ session }}
+    type: learner
+    group: group-{{ i }}
+    host: host-{{ j }}
+spec:
+  nodeSelector:
+    type: gpu
+  restartPolicy: Never  # if failure, let it die
+  volumes:
+  - name: training-log-dir
+    emptyDir: {}
+{% if docker_registry_credential %}
+  imagePullSecrets:
+  - name: {{ docker_registry_credential }}
+{% endif %}
+  containers:
+    - name: {{ session }}-lg{{ i }}-h{{ j }}-container
+      image: {{ learner_image }}
+      ports:
+      - containerPort: {{ hvd_ssh_port }}
+{% for k in range(n_gpus_per_host) %}
+      - containerPort: {{ lrn_port_base + 2*k }}
+      - containerPort: {{ lrn_port_base + 2*k + 1}}
+{% endfor %}
+{% if lrn_tb_port %}
+      - containerPort: {{ lrn_tb_port }}
+{% endif %}
+{% if require_resources %}
+      resources:
+        limits:
+          nvidia.com/gpu: {{ n_gpus_per_host }}
+        requests:
+          nvidia.com/gpu: {{ n_gpus_per_host }}
+          cpu: 7
+          memory: 14Gi
+{% endif %}
+      env:
+      - name: NONCCL_DEBUG
+        value: "INFO"
+{% if j == 0 %}
+{# --- run the mpirun/horovodrun command --- #}
+      volumeMounts:
+      - name: training-log-dir
+        mountPath: /root/work/training_log
+      command:
+      - "tleague_horovodrun"
+      args:
+      - "--verbose"
+      - "--exclude-env-vars-pattern"
+      - "TR|IM|EVBACK|EVFRONT"
+      - "--start-timeout"
+      - "1800"
+      - "-p"
+      - "{{ hvd_ssh_port }}"
+      - "-np"
+      - "{{ n_hosts_per_lrn_group[i] * n_gpus_per_host }}"
+      - "-H"
+{% set sep = joiner(',') %}
+      - "{% for jj in range(n_hosts_per_lrn_group[i]) %}{{ sep() }}{{ session }}-lg{{ i }}-h{{ jj }}:{{ n_gpus_per_host }}{% endfor %}"
+      - "python"
+      - "-m"
+      - "tleague.bin.run_pg_learner"
+      - "--type=PPO"
+      - "--league_mgr_addr={{ session }}-league-mgr:{{ league_mgr_port }}"
+{% set sep = joiner(',') %}
+      - "--model_pool_addrs={% for i in range(n_model_pools) %}{{ sep() }}{{ session }}-mp{{ i }}:{{ model_pool_port1 }}:{{ model_pool_port2 }}{% endfor %}"
+{% for ind_host in range(n_hosts_per_lrn_group[i]) %}
+{% set sep = joiner(',') %}
+      - "--learner_spec={% for gpu_id in range(n_gpus_per_host) %}{{ sep() }}{{ gpu_id }}:{{ lrn_port_base + 2*gpu_id }}:{{ lrn_port_base + 2*gpu_id + 1 }}{% endfor %}"
+{% endfor %}
+      - "--learner_id=lrngrp{{ i }}"
+      - "--unroll_length={{ unroll_length }}"
+      - "--rollout_length={{ rollout_length }}"
+      - "--batch_size={{ batch_size }}"
+      - "--rm_size={{ lrn_rm_size }}"
+      - "--pub_interval={{ lrn_pub_interval }}"
+      - "--log_interval={{ lrn_log_interval }}"
+      - "--total_timesteps={{ lrngrp_total_timesteps[i] }}"
+      - "--burn_in_timesteps={{ lrn_burn_in_timesteps }}"
+      - "--env={{ env }}"
+      - "--env_config={{ lrngrp_env_config[i] }}"
+      - "--interface_config={{ lrngrp_interface_config[i] }}"
+      - "--policy={{ policy }}"
+      - "--policy_config={{ policy_config }}"
+      - "--{% if lrn_rwd_shape %}rwd_shape{% else %}norwd_shape{% endif %}"
+      - "--batch_worker_num={{ 2 }}"
+      - "--learner_config={{ lrngrp_learner_config[i] }}"
+      - "--data_server_version=v2"
+      - "--decode"
+      - "--log_infos_interval=1000"
+{% else %}
+{# --- start an ssh deamon and run an arbitray command that occupies the container --- #}
+      command:
+      - "bash"
+      - "-c"
+      args:
+      - "/usr/sbin/sshd -p {{ hvd_ssh_port }}; sleep {{ 3600 * 24 * 7 * 52 * 3}}"
+{% endif %}
+{% if j==0 and lrn_tb_port %}
+{# --- start tensorboard when applicable --- #}
+    - name: {{ session }}-tb-lrngrp{{ i }}rank0-container
+      image: {{ learner_image }}
+      ports:
+      - containerPort: {{ lrn_tb_port }}
+      volumeMounts:
+      - name: training-log-dir
+        mountPath: /root/training_log
+      env:
+      - name: CUDA_VISIBLE_DEVICES
+        value: ""
+      command:
+      - "tensorboard"
+      args:
+      - "--logdir=/root/training_log/lrngrp{{ i }}rank0"
+      - "--port={{ lrn_tb_port }}"
+{% endif %}
+{# --- endif j == 0 --- #}
+{% if true %}
+{% for k in range(n_gpus_per_host) %}
+{# --- the actors correspond to group i host j localrank k--- #}
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ session }}-actor-lg{{ i }}-h{{ j }}-localrank{{ k }}
+  labels:
+    session: {{ session }}
+    type: actor
+spec:
+  replicas: {{ n_actors_per_learner }}
+  selector:
+    matchLabels:
+      session: {{ session }}
+      type: actor
+      group: group-{{ i }}
+      host: host-{{ j }}
+      localrank: localrank-{{ k }}
+  template:
+    metadata:
+      labels:
+        session: {{ session }}
+        type: actor
+        group: group-{{ i }}
+        host: host-{{ j }}
+        localrank: localrank-{{ k }}
+    spec:
+      nodeSelector:
+        type: cpu
+      volumes:
+      - name: data-dir
+        persistentVolumeClaim:
+          claimName: {{ pvc_name }}
+{% if docker_registry_credential != "" %}
+      imagePullSecrets:
+      - name: {{ docker_registry_credential }}
+{% endif %}
+      containers:
+      - name: {{ session }}-actor-lg{{ i }}-h{{ j }}-localrank{{ k }}-container
+        image: {{ image }}
+        imagePullPolicy: IfNotPresent
+{% if require_resources %}
+        resources:
+          limits:
+            nvidia.com/gpu: 0
+          requests:
+            nvidia.com/gpu: 0
+            cpu: 1700m
+            memory: 3.4Gi
+{% endif %}
+        command:
+        - "python"
+        args:
+        - "-m"
+        - "tleague.bin.run_pg_actor"
+        - "--type=PPO"
+        - "--league_mgr_addr={{ session }}-league-mgr:{{ league_mgr_port }}"
+{% set sep = joiner(',') %}
+        - "--model_pool_addrs={% for i in range(n_model_pools) %}{{ sep() }}{{ session }}-mp{{ i }}:{{ model_pool_port1 }}:{{ model_pool_port2 }}{% endfor %}"
+        - "--learner_addr={{ session }}-lg{{ i }}-h{{ j }}:{{ lrn_port_base + 2*k }}:{{ lrn_port_base + 2*k + 1 }}"
+        - "--unroll_length={{ unroll_length }}"
+        - "--update_model_freq={{ actor_update_model_freq }}"
+        - "--env={{ env }}"
+        - "--env_config={{ lrngrp_env_config[i] }}"
+        - "--policy={{ policy }}"
+        - "--policy_config={{ self_policy_config }}"
+        - "--verbose={{ actor_verbose }}"
+        - "--log_interval_steps={{ actor_log_interval_steps }}"
+        - "--n_v={{ n_v }}"
+        - "--{% if actor_rwd_shape %}rwd_shape{% else %}norwd_shape{% endif %}"
+        - "--interface_config={{ lrngrp_interface_config[i] }}"
+        - "--replay_dir={{ actor_replay_dir }}"
+{% if use_infserver %}
+{% set sep = joiner(',') %}
+        - "--self_infserver_addr={% for m in range(parallel_infserver_num) %}{{ sep() }}{{ session }}-infserver-lg{{ i }}-h{{ j }}:{{ lrn_port_base - 1 - m }}{% endfor %}"
+{% endif %}
+{% endfor %}
+{# --- endfor k --- #}
+{% endif %}
+{# --- infserver --- #}
+{% if use_infserver %}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ session }}-infserver-lg{{i}}-h{{ j }}
+  labels:
+    session: {{ session }}
+    type: infserver
+    group: group-{{ i }}
+    host: host-{{ j }}
+spec:
+  selector:
+    session: {{ session }}
+    type: infserver
+    group: group-{{ i }}
+    host: host-{{ j }}
+  ports:
+{% for m in range(parallel_infserver_num) %}
+  - port: {{ lrn_port_base - 1 - m}}
+    name: port-inf-{{ m }}
+{% endfor %}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ session }}-infserver-lg{{ i }}-h{{ j }}
+  labels:
+    session: {{ session }}
+    type: infserver
+    group: group-{{ i }}
+    host: host-{{ j }}
+spec:
+  nodeSelector:
+    type: gpu
+  restartPolicy: Never  # if failure, let it die
+  volumes:
+    - name: data-dir
+      persistentVolumeClaim:
+        claimName: {{ pvc_name }}
+{% if docker_registry_credential %}
+  imagePullSecrets:
+  - name: {{ docker_registry_credential }}
+{% endif %}
+  containers:
+    - name: {{ session }}-infserver-lg{{ i }}-h{{ j }}-container
+      image: {{ learner_image }}
+      ports:
+{% for m in range(parallel_infserver_num) %}
+      - containerPort: {{ lrn_port_base - 1 - m }}
+{% endfor %}
+{% if require_resources %}
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+        requests:
+          nvidia.com/gpu: 1
+          cpu: 6
+          memory: 10Gi
+{% endif %}
+      env:
+      - name: NCCL_DEBUG
+        value: "INFO"
+      command:
+      - "python3"
+      args:
+      - "-m"
+      - "tleague.bin.run_inference_server"
+      - "--nohvd_run"
+      - "--env={{ env }}"
+      - "--env_config={{ lrngrp_env_config[i] }}"
+      - "--interface_config={{ lrngrp_interface_config[i] }}"
+      - "--is_rl"
+      - "--policy={{ policy }}"
+      - "--port={{ lrn_port_base - 1 }}"
+      - "--policy_config={{ self_policy_config }}"
+      - "--infserver_config={{ self_infserver_config }}"
+      - "--league_mgr_addr={{ session }}-league-mgr:{{ league_mgr_port }}"
+      - "--learner_id=lrngrp{{ i }}"
+{% set sep = joiner(',') %}
+      - "--model_pool_addrs={% for i in range(n_model_pools) %}{{ sep() }}{{ session }}-mp{{ i }}:{{ model_pool_port1 }}:{{ model_pool_port2 }}{% endfor %}"
+      - "--batch_worker_num={{ infserver_batch_worker_num }}"
+{% endif %}
+{% endfor %}
+{# --- endfor j --- #}
+{% endfor %}
+{# --- endfor i --- #}
+{% endif %}
+{# --- endif true/false --- #}
+
+

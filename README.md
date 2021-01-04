@@ -70,7 +70,7 @@ see the [link here](https://github.com/tencent-ailab/Arena#dependencies).
 [Here are examples](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#vizdoom)
 of how to train ViZDoom in a single machine.
 
-Refer also to the [link here](https://github.com/tencent-ailab/TLeagueVdAutoBuild.git) for how to (auto-)build the docker image,
+Refer also to the [link here](https://github.com/tencent-ailab/TLeagueAutoBuild/tree/dev-open) for how to (auto-)build the docker image,
 which is yet-another guide to installation from scratch.
 
 For running training over a k8s cluster, see the [link here](vizdoom/README.md#training-code).
@@ -83,9 +83,10 @@ see the [link here](https://github.com/tencent-ailab/Arena#dependencies).
 [Here are examples](https://github.com/tencent-ailab/TLeague/blob/dev-open/docs/EXAMPLE_SM.md#pommerman)
 for how to train Pommerman in a single machine. 
 
-TODO: pointer to the Docker Auto Build repo and say it's yet-another guide to installation from scratch.
+Refer also to the [link here](https://github.com/tencent-ailab/TLeagueAutoBuild/tree/pommerman) for how to (auto-)build the docker image,
+which is yet-another guide to installation from scratch.
 
-TODO: texts for how to train with k8s
+For running training over a k8s cluster, see the [link here](pommerman/README.md#training-code).
 
 ### Single Agent RL
 TLeague also works for pure RL,
