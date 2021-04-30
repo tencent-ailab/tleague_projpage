@@ -17,8 +17,8 @@ see our guidance of [human-machine test](hm_test.md).
 ## Downloads
 ### TStarBot-X Replay Files
 Here are the replay files of the human-machine tests as discussed in the TStarBot-X technical report:
-[Google Drive](https://drive.google.com/file/d/1wIOpB_aPrzCCJ9uZbQJmiWSbDFODl4B4/view?usp=sharing) 
-or [Tencent Weiyun](https://share.weiyun.com/Ju44Zkks)
+[Google Drive](https://drive.google.com/file/d/1U6vMdsjfQWJE9DMGNs-OlLqngOwdwbsf/view?usp=sharing) 
+or [Tencent Weiyun](https://share.weiyun.com/zNuIVoxh)
 
 ### Maps
 When running the human-machine test or opening the replays,
